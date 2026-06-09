@@ -48,7 +48,6 @@
         font-weight: 700;
       }
 
-      label + input,
       label + textarea {
         margin-bottom: 14px;
       }
@@ -87,8 +86,7 @@
         margin: 12px 0 18px;
       }
 
-      button,
-      a.download {
+      button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -104,8 +102,7 @@
         cursor: pointer;
       }
 
-      button.secondary,
-      a.download {
+      button.secondary {
         background: #2a2d38;
       }
 
@@ -132,12 +129,6 @@
       <h1>Notion Embed Link Maker</h1>
 
       <section class="panel">
-        <label for="rendererUrl">개인 렌더러 URL</label>
-        <input
-          id="rendererUrl"
-          placeholder="자동으로 현재 사이트의 renderer 주소를 사용합니다."
-        />
-
         <label for="htmlCode">HTML 코드</label>
         <textarea id="htmlCode" spellcheck="false"><style>
 @font-face {
@@ -209,7 +200,6 @@ body {
         <div class="actions">
           <button type="button" id="makeLink">링크 만들기</button>
           <button type="button" class="secondary" id="copyLink">링크 복사</button>
-          <a class="download" id="downloadLink" download="notion-embed-link.txt" href="#">txt 저장</a>
         </div>
 
         <label for="resultLink">Notion 임베드 링크</label>
@@ -219,37 +209,40 @@ body {
     </main>
 
     <script>
-      const rendererUrl = document.querySelector("#rendererUrl");
       const htmlCode = document.querySelector("#htmlCode");
       const resultLink = document.querySelector("#resultLink");
       const statusText = document.querySelector("#status");
       const makeButton = document.querySelector("#makeLink");
       const copyButton = document.querySelector("#copyLink");
-      const downloadLink = document.querySelector("#downloadLink");
       const previewFrame = document.querySelector("#previewFrame");
       let previewTimer = 0;
+      const rendererUrl = new URL("renderer/", window.location.href).href;
 
-      rendererUrl.value = new URL("renderer/", window.location.href).href;
+      function toBase64Url(value) {
+        const bytes = new TextEncoder().encode(value);
+        let binary = "";
+        const chunkSize = 0x8000;
 
-      function normalizeRendererUrl(value) {
-        const url = new URL(value.trim());
-        return url.href;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+        }
+
+        return btoa(binary)
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/g, "");
       }
 
       function makeNotionLink() {
         try {
-          const baseUrl = normalizeRendererUrl(rendererUrl.value);
-          const encoded = encodeURIComponent(`${htmlCode.value}nt`);
-          const link = `${baseUrl}?c=${encoded}`;
+          const encoded = toBase64Url(`${htmlCode.value}nt`);
+          const link = `${rendererUrl}?v=${Date.now()}&b=${encoded}`;
           resultLink.value = link;
-          downloadLink.href = URL.createObjectURL(
-            new Blob([link], { type: "text/plain;charset=utf-8" }),
-          );
           statusText.textContent = "링크가 만들어졌습니다.";
           return link;
         } catch (error) {
           resultLink.value = "";
-          statusText.textContent = "렌더러 URL을 확인해 주세요.";
+          statusText.textContent = "링크를 만들지 못했습니다.";
           return "";
         }
       }
@@ -283,11 +276,6 @@ body {
 
       makeButton.addEventListener("click", makeNotionLink);
       copyButton.addEventListener("click", copyNotionLink);
-
-      rendererUrl.addEventListener("input", () => {
-        resultLink.value = "";
-        statusText.textContent = "";
-      });
 
       htmlCode.addEventListener("input", () => {
         resultLink.value = "";
