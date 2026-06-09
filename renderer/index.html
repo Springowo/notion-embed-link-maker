@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Notion HTML Renderer</title>
+    <style>
+      body {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const encodedHtml = params.get("c") || "";
+
+      try {
+        let html = decodeURIComponent(encodedHtml);
+
+        if (html.endsWith("nt")) {
+          html = html.slice(0, -2);
+        }
+
+        document.open();
+        document.write(html);
+        document.close();
+      } catch (error) {
+        document.body.textContent = "HTML을 불러오지 못했습니다.";
+      }
+    </script>
+  </body>
+</html>
