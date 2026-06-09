@@ -13,19 +13,27 @@
   <body>
     <script>
       const params = new URLSearchParams(window.location.search);
-      const encodedHtml = params.get("c") || "";
+      let html = params.get("c") || "";
 
-      try {
-        let html = decodeURIComponent(encodedHtml);
-
-        if (html.endsWith("nt")) {
-          html = html.slice(0, -2);
+      function safeDecode(value) {
+        try {
+          return decodeURIComponent(value);
+        } catch (error) {
+          return value;
         }
+      }
 
+      html = safeDecode(html);
+
+      if (html.endsWith("nt")) {
+        html = html.slice(0, -2);
+      }
+
+      if (html.trim()) {
         document.open();
         document.write(html);
         document.close();
-      } catch (error) {
+      } else {
         document.body.textContent = "HTML을 불러오지 못했습니다.";
       }
     </script>
