@@ -13,7 +13,16 @@
   <body>
     <script>
       const params = new URLSearchParams(window.location.search);
-      let html = params.get("c") || "";
+      let html = "";
+
+      function fromBase64Url(value) {
+        const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+        const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+        const binary = atob(padded);
+        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+
+        return new TextDecoder().decode(bytes);
+      }
 
       function safeDecode(value) {
         try {
@@ -23,7 +32,11 @@
         }
       }
 
-      html = safeDecode(html);
+      if (params.has("b")) {
+        html = fromBase64Url(params.get("b") || "");
+      } else {
+        html = safeDecode(params.get("c") || "");
+      }
 
       if (html.endsWith("nt")) {
         html = html.slice(0, -2);
